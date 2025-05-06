@@ -33,8 +33,8 @@ class _HomePageState extends State<HomePage> {
 
   List<String> _printerList = ["Dummy Printer"];
   String? _selectedPrinter;
-  final TextEditingController _idPotong = TextEditingController(text: 'P-00001');
-  final TextEditingController _sku = TextEditingController(text: 'NC85_HITAM_XL');
+  final TextEditingController _idPotong = TextEditingController(text: 'P-12345678');
+  final TextEditingController _sku = TextEditingController(text: 'NAMABARANG_WARNA_UKURAN');
   final TextEditingController _jumlahCetak = TextEditingController(text: '1');
 
   Future<List<String>> getPrinters() async {
@@ -112,7 +112,6 @@ class _HomePageState extends State<HomePage> {
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    AppSnackbar.show(message: "Memuat ulang list printer...", type: "success");
                     try {
                       final printers = await getPrinters();
                       setState(() {
@@ -129,7 +128,26 @@ class _HomePageState extends State<HomePage> {
                   label: const Text('REFRESH PRINTER'),
                 ),
               ),
-              
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (_selectedPrinter == null) {
+                      AppSnackbar.show(message: "Pilih printer terlebih dahulu", type: "error");
+                      return;
+                    }
+                    try {
+                      await cancelAllPrintJobs(_selectedPrinter!);
+                      AppSnackbar.show(message: "Semua print job dibatalkan", type: "success");
+                    } catch (e) {
+                      AppSnackbar.show(message: "Gagal membatalkan: $e", type: "error");
+                    }
+                  },
+                  icon: const Icon(Icons.cancel),
+                  label: const Text("BATALKAN PROSES PRINT"),
+                ),
+
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedPrinter,
@@ -207,8 +225,6 @@ class _HomePageState extends State<HomePage> {
                   label: const Text('CETAK LABEL 2 KOLOM'),
                 ),
               ),
-              // const SizedBox(height: 40),
-              // const Text('Tes Printer', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
             ],
           ),

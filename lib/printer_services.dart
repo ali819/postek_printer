@@ -103,5 +103,58 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
   });
 }
 
+// Fungsi untuk membatalkan semua pekerjaan cetak pada printer tertentu
+// ignore: constant_identifier_names
+const int JOB_CONTROL_CANCEL = 0x00000001;
+Future<void> cancelAllPrintJobs(String printerName) async {
+  return Future(() {
+    final printerHandlePtr = calloc<HANDLE>();
+
+    final opened = OpenPrinter(printerName.toNativeUtf16(), printerHandlePtr, nullptr);
+    if (opened == 0) {
+      calloc.free(printerHandlePtr);
+      throw Exception('Gagal membuka printer: $printerName');
+    }
+
+    final handle = printerHandlePtr.value;
+    final jobCount = calloc<Uint32>();
+    final bytesNeeded = calloc<Uint32>();
+
+    // Panggilan pertama untuk ambil ukuran buffer
+    EnumJobs(handle, 0, 999, 1, nullptr, 0, bytesNeeded, jobCount);
+
+    final needed = bytesNeeded.value;
+    if (needed == 0) {
+      ClosePrinter(handle);
+      calloc.free(printerHandlePtr);
+      calloc.free(jobCount);
+      calloc.free(bytesNeeded);
+      return;
+    }
+
+    final buffer = calloc<Uint8>(needed);
+    final success = EnumJobs(handle, 0, 999, 1, buffer, needed, bytesNeeded, jobCount);
+    if (success == 0) {
+      ClosePrinter(handle);
+      calloc.free(buffer);
+      calloc.free(printerHandlePtr);
+      throw Exception("Gagal membaca job printer");
+    }
+
+    final jobStructSize = sizeOf<JOB_INFO_1>();
+    final jobCountVal = jobCount.value;
+
+    for (var i = 0; i < jobCountVal; i++) {
+      final job = Pointer<JOB_INFO_1>.fromAddress(buffer.address + i * jobStructSize).ref;
+      SetJob(handle, job.JobId, 0, nullptr, JOB_CONTROL_CANCEL);
+    }
+
+    calloc.free(buffer);
+    ClosePrinter(handle);
+    calloc.free(printerHandlePtr);
+    calloc.free(jobCount);
+    calloc.free(bytesNeeded);
+  });
+}
 
 
