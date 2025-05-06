@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ffi/ffi.dart';
+import 'package:flutter/services.dart';
 import 'package:postek_printer/component/snackbar.dart';
 import 'package:win32/win32.dart';
 import 'package:postek_printer/printer_services.dart';
@@ -184,8 +185,14 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
               TextField(
                 controller: _jumlahCetak,
-                decoration: const InputDecoration(labelText: 'JUMLAH CETAK :',labelStyle: TextStyle(fontWeight: FontWeight.bold)),
+                decoration: const InputDecoration(
+                  labelText: 'JUMLAH CETAK :',
+                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,  // Memastikan hanya angka yang diterima
+                ],
               ),
               const SizedBox(height: 30),
               Center(
