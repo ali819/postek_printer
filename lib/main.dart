@@ -2,7 +2,6 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ffi/ffi.dart';
-import 'package:intl/intl.dart';
 import 'package:postek_printer/component/snackbar.dart';
 import 'package:win32/win32.dart';
 import 'package:postek_printer/printer_services.dart';
@@ -199,7 +198,7 @@ class _HomePageState extends State<HomePage> {
                     if (jumlah <= 0) jumlah = 1;
 
                     if (sku1.isEmpty || idPotong1.isEmpty) {
-                      AppSnackbar.show( message: "SKU & kode potong wajib diisi", type: "error");
+                      AppSnackbar.show( message: "Semua form wajib diisi", type: "error");
                       return;
                     }
 
@@ -213,7 +212,7 @@ class _HomePageState extends State<HomePage> {
                     ));
 
                     if (result.success) {
-                      AppSnackbar.show(message: "Mencetak berhasil", type: "success");
+                      AppSnackbar.show(message: "Label berhasil dicetak", type: "success");
                     } else {
                       AppSnackbar.show(
                         message: result.error ?? "Gagal mencetak",
