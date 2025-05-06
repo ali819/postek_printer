@@ -93,6 +93,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    getPrinters().then((printers) {
+      setState(() {
+        _printerList = printers;
+        _selectedPrinter = printers.isNotEmpty ? printers.first : null;
+      });
+    });
     super.initState();
   }
 
