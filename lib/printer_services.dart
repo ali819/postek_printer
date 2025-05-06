@@ -13,18 +13,20 @@ class PrintResult {
 
 class LabelPrintParams {
   final String printerName;
-  final String sku1;
-  final String idPotong1;
-  final String sku2;
-  final String idPotong2;
+  final String skuKiri;
+  final String idPotongKiri;
+  final String skuKanan;
+  final String idPotongKanan;
+  final String tanggal;
   final int jumlah;
 
   LabelPrintParams({
     required this.printerName,
-    required this.sku1,
-    required this.idPotong1,
-    required this.sku2,
-    required this.idPotong2,
+    required this.skuKiri,
+    required this.idPotongKiri,
+    required this.skuKanan,
+    required this.idPotongKanan,
+    required this.tanggal,
     required this.jumlah,
   });
 }
@@ -65,16 +67,24 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
       }
 
       final tspl = '''
-      SIZE 100 mm,40 mm
+      SIZE 100 mm,20 mm
       GAP 2 mm,0
       DENSITY 8
       DIRECTION 1
       CLS
-      TEXT 30,30,"3",0,1,1,"${params.idPotong1}"
-      BARCODE 30,70,"128",80,1,0,2,2,"${params.sku1}"
-      TEXT 280,30,"3",0,1,1,"${params.idPotong2}"
-      BARCODE 280,70,"128",80,1,0,2,2,"${params.sku2}"
+
+      TEXT 5,5,"3",0,1,1,"YOUNIQ EXCLUSIVE"
+      BARCODE 5,25,"128",40,1,0,2,2,"${params.skuKiri}"
+      TEXT 5,70,"3",0,1,1,"${params.skuKiri}"
+      TEXT 5,90,"3",0,1,1,"${params.tanggal}/${params.idPotongKiri}"
+
+      TEXT 55,5,"3",0,1,1,"YOUNIQ EXCLUSIVE"
+      BARCODE 55,25,"128",40,1,0,2,2,"${params.skuKanan}"
+      TEXT 55,70,"3",0,1,1,"${params.skuKanan}"
+      TEXT 55,90,"3",0,1,1,"${params.tanggal}/${params.idPotongKanan}"
+
       PRINT ${params.jumlah}
+
       ''';
 
       dataPtr = tspl.toNativeUtf8();

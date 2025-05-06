@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ffi/ffi.dart';
+import 'package:intl/intl.dart';
 import 'package:postek_printer/component/snackbar.dart';
 import 'package:win32/win32.dart';
 import 'package:postek_printer/printer_services.dart';
@@ -201,13 +202,16 @@ class _HomePageState extends State<HomePage> {
                       AppSnackbar.show( message: "SKU & kode potong wajib diisi", type: "error");
                       return;
                     }
+                    final now = DateTime.now();
+                    final formattedTanggal = DateFormat('ddMMyy').format(now);
 
                     final result = await computePrintDoubleLabel(LabelPrintParams(
                       printerName: _selectedPrinter!,
-                      sku1: sku1,
-                      idPotong1: idPotong1,
-                      sku2: sku2,
-                      idPotong2: idPotong2,
+                      skuKiri: sku1,
+                      idPotongKiri: idPotong1,
+                      skuKanan: sku2,
+                      idPotongKanan: idPotong2,
+                      tanggal: formattedTanggal,
                       jumlah: jumlah,
                     ));
 
