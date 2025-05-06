@@ -166,7 +166,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_selectedPrinter == null) {
                       AppSnackbar.show( message: "Pilih printer terlebih dahulu", type: "error");
                       return;
@@ -184,21 +184,22 @@ class _HomePageState extends State<HomePage> {
                       return;
                     }
 
-                    final result = printDoubleLabel(
+                    final result = await computePrintDoubleLabel(LabelPrintParams(
                       printerName: _selectedPrinter!,
                       sku1: sku1,
                       idPotong1: idPotong1,
                       sku2: sku2,
                       idPotong2: idPotong2,
                       jumlah: jumlah,
-                      onError: (errMsg) {
-                        print("Error (CETAK LABEL 2 KOLOM): $errMsg");
-                        AppSnackbar.show(message: "Error (CETAK LABEL 2 KOLOM): $errMsg", type: "error");
-                      },
-                    );
+                    ));
 
-                    if (result) {
+                    if (result.success) {
                       AppSnackbar.show(message: "Mencetak berhasil", type: "success");
+                    } else {
+                      AppSnackbar.show(
+                        message: result.error ?? "Gagal mencetak",
+                        type: "error",
+                      );
                     }
 
                   },
@@ -209,36 +210,6 @@ class _HomePageState extends State<HomePage> {
               // const SizedBox(height: 40),
               // const Text('Tes Printer', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              Center(
-                child:ElevatedButton.icon(
-                  onPressed: () {
-                    if (_selectedPrinter == null) {
-                      AppSnackbar.show( message: "Pilih printer terlebih dahulu", type: "error");
-                      return;
-                    }
-                    final result = printDoubleLabel(
-                      printerName: _selectedPrinter!,
-                      sku1: "SKU_1",
-                      idPotong1: "ID_POTONG_1",
-                      sku2: "SKU_2",
-                      idPotong2: "ID_POTONG_2",
-                      jumlah: 1,
-                      onError: (errMsg) {
-                        print("Error (TES PRINTER 2 KOLOM): $errMsg");
-                        AppSnackbar.show(message: "Error (TES PRINTER 2 KOLOM) $errMsg", type: "error");
-                      },
-                    );
-
-                    if (result) {
-                      AppSnackbar.show(message: "Mencetak berhasil", type: "success");
-                    }
-
-                  },
-                  icon: const Icon(Icons.print),
-                  label: const Text('TES PRINTER 2 KOLOM'),
-                ),
-              ),
-              
             ],
           ),
         ),
