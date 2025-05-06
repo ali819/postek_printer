@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:intl/intl.dart';
 import 'package:win32/win32.dart';
 
 class PrintResult {
@@ -17,7 +18,6 @@ class LabelPrintParams {
   final String idPotongKiri;
   final String skuKanan;
   final String idPotongKanan;
-  final String tanggal;
   final int jumlah;
 
   LabelPrintParams({
@@ -26,12 +26,47 @@ class LabelPrintParams {
     required this.idPotongKiri,
     required this.skuKanan,
     required this.idPotongKanan,
-    required this.tanggal,
     required this.jumlah,
   });
 }
 
-//  Fuungsi untuk print label ganda
+// Fungsi untuk menghitung posisi X agar teks rata tengah dalam area
+int centerTextX({
+  required String text,
+  required int areaWidth,
+  int charWidth = 8,
+  int scaleX = 1,
+}) {
+  final totalTextWidth = text.length * charWidth * scaleX;
+  return ((areaWidth - totalTextWidth) / 2).round();
+}
+
+// Fungsi untuk menghitung posisi X agar teks rata kanan dalam area
+int rightAlignTextX({
+  required String text,
+  required int areaWidth,
+  int charWidth = 8,
+  int scaleX = 1,
+  int paddingRight = 10,
+}) {
+  final totalTextWidth = text.length * charWidth * scaleX;
+  return areaWidth - totalTextWidth - paddingRight;
+}
+
+// Fungsi untuk menghitung lebar barcode berdasarkan panjang data
+// Kode 128 membutuhkan sekitar 11 modul (unit) per karakter + 2 untuk start/stop.
+// Misalnya, untuk 10 karakter, lebar barcode = (10 * 11 + 2) * narrow
+int barcodeWidth({
+  required String data,
+  int narrow = 2,
+}) {
+  final charCount = data.length;
+  final moduleCount = (charCount * 11 + 2); // asumsi kasar untuk Code 128
+  return moduleCount * narrow;
+}
+
+
+// Fungsi untuk print label ganda
 Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
   return await Isolate.run(() {
     Pointer<IntPtr>? hPrinter;
@@ -66,6 +101,32 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
         return PrintResult(success: false, error: 'Gagal memulai halaman printer.');
       }
 
+      // Format tanggal ke ddMMyy
+      final now = DateTime.now();
+      final formattedTanggal = DateFormat('ddMMyy').format(now);
+
+      // Area lebar (dalam dot) untuk masing-masing kolom (50 mm ~ 400 dots)
+      final areaWidth = 400;
+
+      // Text header
+      const headerText = "YOUNIQ EXCLUSIVE";
+      final headerXKiri = centerTextX(text: headerText, areaWidth: areaWidth);
+      final headerXKanan = centerTextX(text: headerText, areaWidth: areaWidth) + 400;
+
+      // SKU teks
+      final skuTextKiriX = centerTextX(text: params.skuKiri, areaWidth: areaWidth);
+      final skuTextKananX = centerTextX(text: params.skuKanan, areaWidth: areaWidth) + 400;
+
+      // Barcode X posisi (Kode 128)
+      final barcodeWidthKiri = barcodeWidth(data: params.skuKiri);
+      final barcodeXKiri = ((areaWidth - barcodeWidthKiri) / 2).clamp(0, areaWidth - barcodeWidthKiri).round();
+      final barcodeWidthKanan = barcodeWidth(data: params.skuKanan);
+      final barcodeXKanan = ((areaWidth - barcodeWidthKanan) / 2).clamp(0, areaWidth - barcodeWidthKanan).round() + 400;
+
+      // Tanggal/ID Potong teks (rata kanan)
+      final bottomTextKiriX = rightAlignTextX(text: "$formattedTanggal/${params.idPotongKiri}", areaWidth: areaWidth);
+      final bottomTextKananX = rightAlignTextX(text: "$formattedTanggal/${params.idPotongKanan}",areaWidth: areaWidth) + 400;
+
       final tspl = '''
       SIZE 100 mm,20 mm
       GAP 2 mm,0
@@ -73,18 +134,17 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
       DIRECTION 1
       CLS
 
-      TEXT 5,5,"3",0,1,1,"YOUNIQ EXCLUSIVE"
-      BARCODE 5,25,"128",40,1,0,2,2,"${params.skuKiri}"
-      TEXT 5,70,"3",0,1,1,"${params.skuKiri}"
-      TEXT 5,90,"3",0,1,1,"${params.tanggal}/${params.idPotongKiri}"
+      TEXT $headerXKiri,5,"3",0,1,1,"$headerText"
+      BARCODE $barcodeXKiri,25,"128",40,1,0,2,2,"${params.skuKiri}"
+      TEXT $skuTextKiriX,70,"3",0,1,1,"${params.skuKiri}"
+      TEXT $bottomTextKiriX,90,"2",0,1,1,"$formattedTanggal/${params.idPotongKiri}"
 
-      TEXT 55,5,"3",0,1,1,"YOUNIQ EXCLUSIVE"
-      BARCODE 55,25,"128",40,1,0,2,2,"${params.skuKanan}"
-      TEXT 55,70,"3",0,1,1,"${params.skuKanan}"
-      TEXT 55,90,"3",0,1,1,"${params.tanggal}/${params.idPotongKanan}"
+      TEXT $headerXKanan,5,"3",0,1,1,"$headerText"
+      BARCODE $barcodeXKanan,25,"128",40,1,0,2,2,"${params.skuKanan}"
+      TEXT $skuTextKananX,70,"3",0,1,1,"${params.skuKanan}"
+      TEXT $bottomTextKananX,90,"2",0,1,1,"$formattedTanggal/${params.idPotongKanan}"
 
       PRINT ${params.jumlah}
-
       ''';
 
       dataPtr = tspl.toNativeUtf8();

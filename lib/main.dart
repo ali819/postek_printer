@@ -32,7 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  List<String> _printerList = ["Dummy Printer"];
+  List<String> _printerList = [];
   String? _selectedPrinter;
   final TextEditingController _idPotong = TextEditingController(text: 'P-12345678');
   final TextEditingController _sku = TextEditingController(text: 'NAMABARANG_WARNA_UKURAN');
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
       calloc.free(pcReturned);
 
       print("List printer: $printers");
-      AppSnackbar.show(message: "List printer: $printers", type: "success");
+      AppSnackbar.show(message: "LIST PRINTER : $printers", type: "success");
       return printers;
     });
   }
@@ -202,8 +202,6 @@ class _HomePageState extends State<HomePage> {
                       AppSnackbar.show( message: "SKU & kode potong wajib diisi", type: "error");
                       return;
                     }
-                    final now = DateTime.now();
-                    final formattedTanggal = DateFormat('ddMMyy').format(now);
 
                     final result = await computePrintDoubleLabel(LabelPrintParams(
                       printerName: _selectedPrinter!,
@@ -211,7 +209,6 @@ class _HomePageState extends State<HomePage> {
                       idPotongKiri: idPotong1,
                       skuKanan: sku2,
                       idPotongKanan: idPotong2,
-                      tanggal: formattedTanggal,
                       jumlah: jumlah,
                     ));
 
