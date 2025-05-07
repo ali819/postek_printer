@@ -65,8 +65,7 @@ int barcodeWidth({
   return moduleCount * narrow;
 }
 
-
-// Fungsi untuk print label ganda
+// Fungsi untuk print label (TSLP)
 Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
   return await Isolate.run(() {
     Pointer<IntPtr>? hPrinter;
@@ -171,6 +170,18 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
       if (hPrinter != null) calloc.free(hPrinter);
     }
   });
+}
+
+// Fungsi untuk cetak label (IMAGE)
+Future<PrintResult> computePrintDoubleLabelAsImage(LabelPrintParams params) async {
+  // TODO: Implement the function logic here.
+  return PrintResult(success: false, error: 'Function not implemented.');
+}
+
+// Fungsi untuk cetak label (Bitmap)
+Future<PrintResult> computePrintDoubleLabelAsBitmap(LabelPrintParams params) async {
+  // TODO: Implement the function logic here.
+  return PrintResult(success: false, error: 'Function not implemented.');
 }
 
 // Fungsi untuk membatalkan semua pekerjaan cetak pada printer tertentu

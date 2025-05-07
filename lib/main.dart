@@ -235,7 +235,51 @@ class _HomePageState extends State<HomePage> {
 
                   },
                   icon: const Icon(Icons.print),
-                  label: const Text('CETAK LABEL 2 KOLOM'),
+                  label: const Text('CETAK LABEL (TSLP)'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (_selectedPrinter == null) {
+                      AppSnackbar.show( message: "Pilih printer terlebih dahulu", type: "error");
+                      return;
+                    }
+
+                    final sku1 = _idPotong.text.trim();
+                    final idPotong1 = _sku.text.trim();
+                    final sku2 = sku1;
+                    final idPotong2 = idPotong1;
+                    var jumlah = int.tryParse(_jumlahCetak.text.trim()) ?? 1;
+                    if (jumlah <= 0) jumlah = 1;
+
+                    if (sku1.isEmpty || idPotong1.isEmpty) {
+                      AppSnackbar.show( message: "Semua form wajib diisi", type: "error");
+                      return;
+                    }
+
+                    final result = await computePrintDoubleLabelAsImage(LabelPrintParams(
+                      printerName: _selectedPrinter!,
+                      skuKiri: sku1,
+                      idPotongKiri: idPotong1,
+                      skuKanan: sku2,
+                      idPotongKanan: idPotong2,
+                      jumlah: jumlah,
+                    ));
+
+                    if (result.success) {
+                      AppSnackbar.show(message: "Label berhasil dicetak", type: "success");
+                    } else {
+                      AppSnackbar.show(
+                        message: result.error ?? "Gagal mencetak",
+                        type: "error",
+                      );
+                    }
+
+                  },
+                  icon: const Icon(Icons.print),
+                  label: const Text('CETAK LABEL (IMAGE)'),
                 ),
               ),
               const SizedBox(height: 10),
