@@ -172,18 +172,6 @@ Future<PrintResult> computePrintDoubleLabel(LabelPrintParams params) async {
   });
 }
 
-// Fungsi untuk cetak label (IMAGE)
-Future<PrintResult> computePrintDoubleLabelAsImage(LabelPrintParams params) async {
-  // TODO: Implement the function logic here.
-  return PrintResult(success: false, error: 'Function not implemented.');
-}
-
-// Fungsi untuk cetak label (Bitmap)
-Future<PrintResult> computePrintDoubleLabelAsBitmap(LabelPrintParams params) async {
-  // TODO: Implement the function logic here.
-  return PrintResult(success: false, error: 'Function not implemented.');
-}
-
 // Fungsi untuk membatalkan semua pekerjaan cetak pada printer tertentu
 // ignore: constant_identifier_names
 const int JOB_CONTROL_CANCEL = 0x00000001;

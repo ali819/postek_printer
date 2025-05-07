@@ -1,9 +1,14 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:ffi/ffi.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:barcode_widget/barcode_widget.dart';
+import 'package:intl/intl.dart';
 import 'package:postek_printer/component/snackbar.dart';
+import 'package:postek_printer/printer_services_image.dart';
 import 'package:win32/win32.dart';
 import 'package:postek_printer/printer_services.dart';
 
@@ -91,6 +96,35 @@ class _HomePageState extends State<HomePage> {
       return printers;
     });
   }
+
+  Future<Uint8List?> renderLabelToImageBytes(LabelPrintParams params) async {
+    final formattedTanggal = DateFormat('ddMMyy').format(DateTime.now());
+
+    final boundary = RenderRepaintBoundary();
+    final pipelineOwner = PipelineOwner();
+    final buildOwner = BuildOwner(focusManager: FocusManager());
+
+    final labelWidget = Directionality(
+      textDirection: ui.TextDirection.ltr,
+      child: buildLabelWidget(params, formattedTanggal),
+    );
+
+    final renderAdapter = RenderObjectToWidgetAdapter<RenderBox>(
+      container: boundary,
+      child: labelWidget,
+    );
+
+    final element = renderAdapter.attachToRenderTree(buildOwner);
+    buildOwner.buildScope(element);
+    pipelineOwner.flushLayout();
+    pipelineOwner.flushCompositingBits();
+    pipelineOwner.flushPaint();
+
+    final image = await boundary.toImage(pixelRatio: 2.0);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
+  }
+
 
   @override
   void initState() {
@@ -259,7 +293,7 @@ class _HomePageState extends State<HomePage> {
                       return;
                     }
 
-                    final result = await computePrintDoubleLabelAsImage(LabelPrintParams(
+                    final imageBytes = await renderLabelToImageBytes(LabelPrintParams(
                       printerName: _selectedPrinter!,
                       skuKiri: sku1,
                       idPotongKiri: idPotong1,
@@ -268,13 +302,12 @@ class _HomePageState extends State<HomePage> {
                       jumlah: jumlah,
                     ));
 
-                    if (result.success) {
-                      AppSnackbar.show(message: "Label berhasil dicetak", type: "success");
+                    if (imageBytes != null) {
+                      final result = await computePrintDoubleLabelAsImage(imageBytes, _selectedPrinter!);
+                      print(result.success ? "Berhasil print!" : result.error);
                     } else {
-                      AppSnackbar.show(
-                        message: result.error ?? "Gagal mencetak",
-                        type: "error",
-                      );
+                      AppSnackbar.show(message: "Gagal merender label ke gambar", type: "error");
+                      return;
                     }
 
                   },
@@ -287,6 +320,44 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildLabelWidget(LabelPrintParams params, String tanggal) {
+    return Container(
+      width: 800, // 100 mm
+      height: 160, // 20 mm
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: buildSingleLabel(params.skuKiri, params.idPotongKiri, tanggal),
+          ),
+          Expanded(
+            child: buildSingleLabel(params.skuKanan, params.idPotongKanan, tanggal),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSingleLabel(String sku, String idPotong, String tanggal) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("YOUNIQ EXCLUSIVE", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        SizedBox(height: 5),
+        BarcodeWidget(
+          barcode: Barcode.code128(),
+          data: sku,
+          width: 180,
+          height: 40,
+        ),
+        SizedBox(height: 5),
+        Text(sku, style: TextStyle(fontSize: 14)),
+        Text('$tanggal/$idPotong', style: TextStyle(fontSize: 12)),
+      ],
     );
   }
 
